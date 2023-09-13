@@ -97,3 +97,124 @@ pip3 install django==1.11.28 -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 ~~~~
 
+
+
+
+
+# day02
+
+- 腾讯发送短信
+- Djangod的ModeForm组件
+- 注册逻辑
+- redis
+
+
+
+## 今日概要
+
+## 详解
+
+## 2.Django的ModelForm
+
+
+
+## 3.注册逻辑
+
+- 点击获取验证码
+  - 获取手机号
+  - 向后台发送ajax
+    - 手机
+    - tpl=register
+  - 向手机发送验证码
+  - 验证码失效处理120S
+
+## 4.redis
+
+### 4.1安装redis
+
+- windows
+- linux
+
+**redis安装教程：[多端安装redis]([Installing Redis | Redis](https://redis.io/docs/getting-started/installation/))**
+
+### 4.2python操作redis的模块
+
+第一步：安装python操作redis模块
+
+``` 
+pip3 install redis
+```
+
+第二步：写代码操作redis
+
+``` 
+import redis
+
+# 连接redis
+conn = redis.Redis(host='',port=6379,passowrd='xxx',encoding='utf-8')
+
+#设置键值：a=12 过期时间10秒
+conn.set(a,12,ex=10)
+
+#获取键值：如果存在返回值，不存在返回None
+value = conn.get('a')
+print(value)
+```
+
+使用redis-py实现redis连接池的主要步骤是:
+
+1. 创建连接池ConnectionPool,指定redis服务器地址、端口、密码等参数,以及最大连接数max_connections。
+
+```
+python
+import redis
+pool = redis.ConnectionPool(
+    host='localhost', 
+    port=6379,
+    password='foobared',
+    max_connections=1000
+)
+```
+
+2. 使用该连接池创建Redis实例:
+
+```
+python 
+conn = redis.Redis(connection_pool=pool)
+```
+
+**django-redis** 模块
+
+第一步：安装django-redis模块
+
+```
+pip3 install django-redis
+```
+
+第二部：配置
+
+~~~
+settings.py
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://{}:{}/{}".format(REDIS_HOST, REDIS_PORT, REDIS_DB),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+~~~
+
+
+
+# day03
+
+## 今日概要
+
+## 详解
+
+- 注册
+- 短信验证码 
+- 用户名密码登录
+

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+from .local_settings import *
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -37,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'apps.user'
+    'apps.user',
 ]
 
 MIDDLEWARE = [
@@ -69,6 +70,20 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'bugsystem.wsgi.application'
+
+###########################django_redis###################################
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/0",     #默认的redis配置项，采用0号redis库
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+            # "PASSWORD": "foobared" # redis密码
+        },
+
+}
+
 
 
 # Database
