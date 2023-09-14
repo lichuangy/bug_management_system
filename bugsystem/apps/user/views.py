@@ -22,7 +22,7 @@ class RegisterModelForm(forms.ModelForm):
             field.widget.attrs['placeholder'] = field.label
 
 def register(request):
-    connect_redis = get_redis_connection("default")
-    connect_redis.set('a','12',ex=20)
+    # connect_redis = get_redis_connection("default")
+    # connect_redis.set('a','12',ex=20)
     form = RegisterModelForm()
     return render(request,'register.html',{'form':form})
