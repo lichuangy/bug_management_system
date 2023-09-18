@@ -1,28 +1,55 @@
-from django.core.validators import RegexValidator
+from django.http import HttpResponse,JsonResponse
 from django.shortcuts import render
 import re
 from django_redis import get_redis_connection
 
-# Create your views here.
-from django import forms
+from .forms.register import RegisterModelForm
 from .models import UserInfo
 
-class RegisterModelForm(forms.ModelForm):
-    mobile_phone = forms.CharField(label='手机号',validators=[RegexValidator(r'^1[3-9]\d{9}$', message='请输入正确的手机号')])
-    password = forms.CharField(label='密码',widget=forms.PasswordInput)
-    confirm_password = forms.CharField(label='确认密码',widget=forms.PasswordInput)
-    code = forms.CharField(label='验证码')
-    class Meta:
-        model = UserInfo
-        fields = "__all__"
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        for name,field in self.fields.items():
-            field.widget.attrs['class'] = 'form-control'
-            field.widget.attrs['placeholder'] = field.label
+# Create your views here.
 
-def register(request):
-    # connect_redis = get_redis_connection("default")
-    # connect_redis.set('a','12',ex=20)
-    form = RegisterModelForm()
-    return render(request,'register.html',{'form':form})
+"""
+
+需求：前端通过点击 获取验证码 按钮后，发送ajax请求携带参数，后端接受参数验证参数并发送验证码
+
+前端 ：发送ajax 请假，参数：手机号和模板类型名
+
+后端：
+    1.接受请求：手机号和模板类型名
+
+    2.业务逻辑：根据传输过来的手机号和模板类型名，验证数据是否为空，是否被注册过了，查询数据库验证
+
+    3响应
+
+    4.路由 GET  sendsms/
+
+    5步骤
+        接受手机号，模板类型名
+        验证数据
+        返回响应
+"""
+
+def sendsms(request):
+    """
+    发送短信
+    """
+
+    # 接收手机号，模板类型名
+
+    # 获取手机号
+    phone = request.GET.get('phone')
+    # 获取模板
+    tpl = request.GET.get('tpl')
+    # 验证数据
+    # 是否未空
+    if not phone:
+        return JsonResponse({'code':400,'err_msg':'参数缺失'})
+    # 验证手机号是否合规
+    form = RegisterModelForm(data={'mobile_phone':phone})
+    if not form.is_valid():
+        return JsonResponse({'code':400,'err_msg':'手机号不正确'})
+    mobile_phone = form.cleaned_data['mobile_phone']
+    if UserInfo.objects.filter(mobile_phone=mobile_phone).exists():
+        return HttpResponse('手机号已存在！')
+    # 返回响应
+    return JsonResponse({'code':200,'err_msg':'ok'})

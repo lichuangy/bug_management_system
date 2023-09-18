@@ -1,0 +1,163 @@
+{% extends 'html/base.html' %}
+{% load static %}
+
+{% block title %} 用户注册 {% endblock %}
+{% block css%}
+<style>
+
+.register {
+  max-width: 35%;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.register h1 {
+  text-align: center;
+}
+
+.register form {
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.form-control {
+  width: 100%;
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+
+button[type="submit"] {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+}
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+<div class="register">
+    <h1>注  册</h1>
+    <form>
+    {% for field in form %}
+        {% if field.name == 'code' %}
+        <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            <div class="row">
+
+              <div class="col-xs-8"
+                <input type="text" id="captcha-input" class="form-control" > {{ field }}
+              </div>
+
+              <div class="col-xs-4">
+                <button class="btn btn-primary" id="get-sms-btn" >获取验证码</button>
+              </div>
+
+            </div>
+        </div>
+        {% else %}
+             <div class="form-group">
+                 <label for="{{ field.id_for_label }}">{{ field.label}}</label>
+                 {{ field }}
+             </div>
+        {% endif %}
+    {% endfor %}
+        <button type="submit" class="btn btn-default">注 册</button>
+</form>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+$('#get-sms-btn').click(function() {
+
+  var phone = $('#id_mobile_phone').val();
+
+  $.ajax({
+    url: '/sendsms/',
+    data: {phone: phone,tpl:"register"},
+
+    success: function(res) {
+
+      if(res.code == 400) {
+        alert(res.err_msg);
+      }
+      console.log(res);
+
+    }
+
+  });
+
+});
+</script>
+
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">-->
+<!--    <title>Register</title>-->
+<!--    <style>-->
+<!--        .register{-->
+<!--            width:600px;-->
+<!--            margin:0 auto;-->
+<!--        }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--<div class="register">-->
+<!--    <h1>注册</h1>-->
+<!--    <form>-->
+<!--    {% for field in form %}-->
+<!--        {% if field.name == 'code' %}-->
+<!--        <div class="form-group">-->
+<!--            <label for="{{ field.id_for_label }}">{{ field.label }}</label>-->
+<!--            <div class="row">-->
+
+<!--              <div class="col-xs-8">-->
+<!--                <input type="text" id="captcha-input" class="form-control">-->
+<!--              </div>-->
+
+<!--              <div class="col-xs-4">-->
+<!--                <button class="btn btn-primary" id="get-captcha-btn">获取验证码</button>-->
+<!--              </div>-->
+
+<!--            </div>-->
+<!--        </div>-->
+<!--        {% else %}-->
+<!--             <div class="form-group">-->
+<!--                 <label for="{{ field.id_for_label }}">{{ field.label}}</label>-->
+<!--                 {{ field }}-->
+<!--             </div>-->
+<!--        {% endif %}-->
+<!--    {% endfor %}-->
+<!--        <button type="submit" class="btn btn-default">注 册</button>-->
+<!--</form>-->
+<!--</div>-->
+
+<!--</body>-->
+<!--</html>-->
