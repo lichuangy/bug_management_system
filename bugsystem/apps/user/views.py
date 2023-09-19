@@ -1,3 +1,5 @@
+import random
+
 from django.http import HttpResponse,JsonResponse
 from django.shortcuts import render
 import re
@@ -52,4 +54,11 @@ def sendsms(request):
     if UserInfo.objects.filter(mobile_phone=mobile_phone).exists():
         return HttpResponse('手机号已存在！')
     # 返回响应
+
     return JsonResponse({'code':200,'err_msg':'ok'})
+
+def send_sms(request):
+    from utils.tencent.sms import send_sms_single
+    code = random.randrange(1000,9999)
+    send_sms_single('19947709908',1931800,[code,])
+    return JsonResponse({'msg':'send sms successtify'})

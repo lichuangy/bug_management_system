@@ -6,4 +6,5 @@ urlpatterns = [
     # url(r'^admin/', admin.site.urls),
     url(r'^register', register.register),
     url(r'^sendsms', views.sendsms),
+    url(r'^send_sms', views.send_sms),
 ]

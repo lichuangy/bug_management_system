@@ -144,3 +144,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
+###########################################腾讯短信应用配置##############################################
+aTENCENT_SMS_APP_ID = 1400853829
+TENCENT_SMS_APP_KEY = 999a5151a88f017f07d69d3a51bca730
+TENCENT_SMS_SIGN = "11"
