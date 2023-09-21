@@ -48,17 +48,23 @@ def sendsms(request):
         return JsonResponse({'code':400,'err_msg':'参数缺失'})
     # 验证手机号是否合规
     form = RegisterModelForm(data={'mobile_phone':phone})
-    if not form.is_valid():
+    if form.is_valid():
         return JsonResponse({'code':400,'err_msg':'手机号不正确'})
-    mobile_phone = form.cleaned_data['mobile_phone']
-    if UserInfo.objects.filter(mobile_phone=mobile_phone).exists():
-        return HttpResponse('手机号已存在！')
-    # 返回响应
-
-    return JsonResponse({'code':200,'err_msg':'ok'})
-
-def send_sms(request):
+    phone = form.cleaned_data['mobile_phone']
+    #校验数据库是否有手机号
+    if UserInfo.objects.filter(mobile_phone=phone).exists():
+        return HttpResponse('手机号已存在')
+    #发送短信模块
+    import bugsystem.settings
+    template_id = bugsystem.settings.TENCENT_SMS_TEMPLATE.get(tpl)
+    print(template_id)
     from utils.tencent.sms import send_sms_single
     code = random.randrange(1000,9999)
-    send_sms_single('19947709908',1931800,[code,])
-    return JsonResponse({'msg':'send sms successtify'})
+    sms = send_sms_single(phone,template_id,[code,])
+    if sms["result"] !=0:
+        print('错误信息',sms["result"])
+        return JsonResponse({"code":400,"err_msg":"发送失败"})
+    cnn = get_redis_connection('sms')
+    cnn.set(phone,code,ex=120)
+    return JsonResponse({"code":200,'msg':'send sms successtify'})
+

@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
-from .local_settings import *
+import bugsystem.local_settings
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -86,7 +86,14 @@ CACHES = {
             },
             # "PASSWORD": "foobared" # redis密码
         },
-
+    "sms": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",  # 默认的redis配置项，采用0号redis库
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+        # "PASSWORD": "foobared" # redis密码
+    },
 }
 
 
@@ -145,6 +152,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 ###########################################腾讯短信应用配置##############################################
-aTENCENT_SMS_APP_ID = 1400853829
-TENCENT_SMS_APP_KEY = 999a5151a88f017f07d69d3a51bca730
-TENCENT_SMS_SIGN = "11"
+TENCENT_SMS_APP_ID = bugsystem.local_settings.TENCENT_SMS_APP_ID
+TENCENT_SMS_APP_KEY = bugsystem.local_settings.TENCENT_SMS_APP_KEY
+TENCENT_SMS_SIGN = bugsystem.local_settings.TENCENT_SMS_SIGN
+TENCENT_SMS_TEMPLATE = bugsystem.local_settings.TENCENT_SMS_TEMPLATE
