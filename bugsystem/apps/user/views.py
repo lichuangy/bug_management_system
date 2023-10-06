@@ -1,3 +1,4 @@
+import json
 import random
 
 from django.http import HttpResponse,JsonResponse
@@ -7,8 +8,47 @@ from django_redis import get_redis_connection
 
 from .forms.register import RegisterModelForm
 from .models import UserInfo
+import re
 
 # Create your views here.
+
+
+def register(request):
+        if request.method == "GET":
+            form = RegisterModelForm()
+            return render(request, 'html/register.html', {'form': form})
+
+        if request.method == "POST":
+            form = RegisterModelForm(data=request.POST)
+            if form.is_valid():
+                return JsonResponse({"code":200,"err_msg":"/logoin"})
+            else:
+                # form.errors 中存储了错误信息
+                errors = form.errors.get_json_data()
+
+                error_msg = []
+                # 遍历错误信息
+                for k, v in errors.items():
+                    # v 是个列表,取第一个元素
+                    error_msg.append(v[0]['message'])
+                    # error_msg = v[0]['message']
+                    # error_msg 就是表单字段验证错误的提示信息
+                    print(error_msg)
+                return JsonResponse({"code":400,"err_msg":error_msg})
+    #
+    # print(request.POST)
+    # return JsonResponse({'code':200})
+    # form = RegisterModelForm(data=request.POST)
+    # if form.is_valid():
+    #     print(form.cleaned_data)
+    # else:
+    #     print(form.errors)
+    # return JsonResponse({})
+
+
+
+
+
 
 """
 
@@ -45,15 +85,19 @@ def sendsms(request):
     # 验证数据
     # 是否未空
     if not phone:
-        return JsonResponse({'code':400,'err_msg':'参数缺失'})
+        return JsonResponse({'code':400,'err_msg':['参数缺失']})
     # 验证手机号是否合规
-    form = RegisterModelForm(data={'mobile_phone':phone})
-    if form.is_valid():
-        return JsonResponse({'code':400,'err_msg':'手机号不正确'})
-    phone = form.cleaned_data['mobile_phone']
+    # 方法一
+    # form = RegisterModelForm(data={'mobile_phone':phone})
+    # if form.is_valid():
+    #     return JsonResponse({'code':400,'err_msg':'手机号不正确'})
+    # # phone = form.cleaned_data['mobile_phone']
+    # 方法二
+    if not re.match(r'1[3-9]\d{9}$',phone):
+        return JsonResponse({'code': 400, 'err_msg': ['手机号不正确']})
     #校验数据库是否有手机号
     if UserInfo.objects.filter(mobile_phone=phone).exists():
-        return HttpResponse('手机号已存在')
+        return JsonResponse({'code': 400, 'err_msg': ['手机号已存在']})
     #发送短信模块
     import bugsystem.settings
     template_id = bugsystem.settings.TENCENT_SMS_TEMPLATE.get(tpl)
