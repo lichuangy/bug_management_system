@@ -4,9 +4,11 @@ import random
 from django.http import HttpResponse,JsonResponse
 from django.shortcuts import render
 import re
+
+from django.views.decorators.csrf import csrf_exempt
 from django_redis import get_redis_connection
 
-from .forms.register import RegisterModelForm
+from .forms.register import RegisterModelForm,LoginFORM
 from .models import UserInfo
 import re
 
@@ -14,27 +16,29 @@ import re
 
 
 def register(request):
-        if request.method == "GET":
-            form = RegisterModelForm()
-            return render(request, 'html/register.html', {'form': form})
+    if request.method == "GET":
+        form = RegisterModelForm()
+        return render(request, 'html/register.html', {'form': form})
 
-        if request.method == "POST":
-            form = RegisterModelForm(data=request.POST)
-            if form.is_valid():
-                return JsonResponse({"code":200,"err_msg":"/logoin"})
-            else:
-                # form.errors 中存储了错误信息
-                errors = form.errors.get_json_data()
+    if request.method == "POST":
+        form = RegisterModelForm(data=request.POST)
+        print(len(request.POST.get('password')))
+        if form.is_valid():
+            instance = form.save()
+            return JsonResponse({"code":200,"err_msg":"/login"})
+        else:
+            # form.errors 中存储了错误信息
+            errors = form.errors.get_json_data()
 
-                error_msg = []
-                # 遍历错误信息
-                for k, v in errors.items():
-                    # v 是个列表,取第一个元素
-                    error_msg.append(v[0]['message'])
-                    # error_msg = v[0]['message']
-                    # error_msg 就是表单字段验证错误的提示信息
-                    print(error_msg)
-                return JsonResponse({"code":400,"err_msg":error_msg})
+            error_msg = []
+            # 遍历错误信息
+            for k, v in errors.items():
+                # v 是个列表,取第一个元素
+                error_msg.append(v[0]['message'])
+                # error_msg = v[0]['message']
+                # error_msg 就是表单字段验证错误的提示信息
+                print(error_msg)
+            return JsonResponse({"code":400,"err_msg":error_msg})
     #
     # print(request.POST)
     # return JsonResponse({'code':200})
@@ -95,20 +99,62 @@ def sendsms(request):
     # 方法二
     if not re.match(r'1[3-9]\d{9}$',phone):
         return JsonResponse({'code': 400, 'err_msg': ['手机号不正确']})
-    #校验数据库是否有手机号
-    if UserInfo.objects.filter(mobile_phone=phone).exists():
-        return JsonResponse({'code': 400, 'err_msg': ['手机号已存在']})
+
     #发送短信模块
     import bugsystem.settings
+    #获取模板编号
     template_id = bugsystem.settings.TENCENT_SMS_TEMPLATE.get(tpl)
-    print(template_id)
-    from utils.tencent.sms import send_sms_single
-    code = random.randrange(1000,9999)
-    sms = send_sms_single(phone,template_id,[code,])
-    if sms["result"] !=0:
-        print('错误信息',sms["result"])
-        return JsonResponse({"code":400,"err_msg":"发送失败"})
-    cnn = get_redis_connection('sms')
-    cnn.set(phone,code,ex=120)
-    return JsonResponse({"code":200,'msg':'send sms successtify'})
+    if template_id == bugsystem.settings.TENCENT_SMS_TEMPLATE.get('register'):
+        # 校验数据库是否有手机号,如果有不让注册
+        if UserInfo.objects.filter(mobile_phone=phone).exists():
+            return JsonResponse({'code': 400, 'err_msg': ['手机号已存在']})
+        print(template_id)
+        from utils.tencent.sms import send_sms_single
+        code = random.randrange(1000, 9999)
+        sms = send_sms_single(phone, template_id, [code])
+        if sms["result"] != 0:
+            print('错误信息', sms["result"])
+            return JsonResponse({"code": 400, "err_msg": "发送失败"})
+        cnn = get_redis_connection('sms')
+        cnn.set(phone, code, ex=120)
+        return JsonResponse({"code": 200, 'msg': 'send sms successtify'})
+    else:
+        # 校验数据库是否有手机号,如果没有不让登录
+        if not UserInfo.objects.filter(mobile_phone=phone).exists():
+            return JsonResponse({'code':400,'err_msg':'手机号未注册，请先注册再登录！'})
+        print(template_id)
+        # from utils.tencent.sms import send_sms_single
+        # code = random.randrange(1000,9999)
+        # sms = send_sms_single(phone,template_id,[code,2])
+        # if sms["result"] !=0:
+        #     print('错误信息',sms["result"])
+        #     return JsonResponse({"code":400,"err_msg":"发送失败"})
+        # cnn = get_redis_connection('sms')
+        # cnn.set(phone,code,ex=120)
+        return JsonResponse({"code":200,'msg':'send sms successtify'})
+
+
+def login(request):
+    """登录"""
+    if request.method == 'GET':
+        form = LoginFORM()
+        return render(request, 'html/login.html', {'form': form})
+
+    form = LoginFORM(request.POST)
+    if form.is_valid():
+        return JsonResponse({"code":200,"err_msg":"ok"})
+
+    else:
+        # form.errors 中存储了错误信息
+        errors = form.errors.get_json_data()
+
+        error_msg = []
+        # 遍历错误信息
+        for k, v in errors.items():
+            # v 是个列表,取第一个元素
+            error_msg.append(v[0]['message'])
+            # error_msg = v[0]['message']
+            # error_msg 就是表单字段验证错误的提示信息
+            print(error_msg)
+        return JsonResponse({"code": 400, "err_msg": error_msg})
 

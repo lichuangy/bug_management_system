@@ -10,7 +10,15 @@ from ..models import UserInfo
 from utils.h256 import sha256_code
 
 
-class RegisterModelForm(forms.ModelForm):
+class BootStrapForm(object):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-control'
+            field.widget.attrs['placeholder'] = '请输入%s' % field.label
+
+class RegisterModelForm(BootStrapForm, forms.ModelForm):
+    """注册表单"""
     mobile_phone = forms.CharField(label='手机号',validators=[RegexValidator(r'^1[3-9]\d{9}$', message='请输入正确的手机号')])
     password = forms.CharField(
         label='密码',
@@ -39,11 +47,12 @@ class RegisterModelForm(forms.ModelForm):
         fields = ['username','email','mobile_phone','password','confirm_password','code']
 
 
-    def __init__(self,*args,**kwargs):
-        super().__init__(*args,**kwargs)
-        for name,field in self.fields.items():
-            field.widget.attrs['class'] = 'form-control'
-            field.widget.attrs['placeholder'] = '请输入%s' % field.label
+    # 继承了bootstrapform，里面有init方法
+    # def __init__(self,*args,**kwargs):
+    #     super().__init__(*args,**kwargs)
+    #     for name,field in self.fields.items():
+    #         field.widget.attrs['class'] = 'form-control'
+    #         field.widget.attrs['placeholder'] = '请输入%s' % field.label
 
     def clean_username(self):
         username = self.cleaned_data['username']
@@ -62,6 +71,7 @@ class RegisterModelForm(forms.ModelForm):
 
     def clean_password(self):
         pwd = self.cleaned_data['password']
+        print(len(sha256_code(pwd)))
         # 加密 & 返回
         return sha256_code(pwd)
 
@@ -91,7 +101,7 @@ class RegisterModelForm(forms.ModelForm):
         if not mobile_phone:
             return code
 
-        conn = get_redis_connection()
+        conn = get_redis_connection('sms')
         redis_code = conn.get(mobile_phone)
         if not redis_code:
             raise ValidationError('验证码失效或未发送，请重新发送')
@@ -102,6 +112,46 @@ class RegisterModelForm(forms.ModelForm):
             raise ValidationError('验证码错误，请重新输入')
 
         return code
+
+
+class LoginFORM(BootStrapForm, forms.Form):
+    """登录表单"""
+    mobile_phone = forms.CharField(label='手机号',validators=[RegexValidator(r'^1[3-9]\d{9}$', message='请输入正确的手机号')])
+    code = forms.CharField(label='验证码',widget=forms.TextInput())
+
+    # 继承了bootstrapform，里面有init方法
+    # def __init__(self,*args,**kwargs):
+    #     super().__init__(*args,**kwargs)
+    #     for name,field in self.fields.items():
+    #         field.widget.attrs['class'] = 'form-control'
+    #         field.widget.attrs['placeholder'] = '请输入%s' % field.label
+
+    def clean_mobile_phone(self):
+        mobile_phone = self.cleaned_data.get('mobile_phone')
+        if not UserInfo.objects.filter(mobile_phone=mobile_phone).exists():
+            raise ValidationError('手机号不存在')
+        return mobile_phone
+
+    def clean_code(self):
+        code = self.cleaned_data['code']
+        mobile_phone = self.cleaned_data.get('mobile_phone')
+        if not mobile_phone:
+            return code
+        conn = get_redis_connection('sms')
+        redis_code = conn.get(mobile_phone)
+        if not redis_code:
+            raise ValidationError('验证码失效或未发送，请重新发送')
+
+        redis_str_code = redis_code.decode('utf-8')
+
+        if code.strip() != redis_str_code:
+            raise ValidationError('验证码错误，请重新输入')
+
+        return code
+
+
+
+
 
 # def register(request):
 #     # connect_redis = get_redis_connection("default")
