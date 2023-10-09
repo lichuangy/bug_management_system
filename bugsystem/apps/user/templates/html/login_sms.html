@@ -5,7 +5,7 @@
 {% block css%}
 <style>
 
-.register {
+.login {
   max-width: 35%;
   margin: 0 auto;
   padding: 20px;
@@ -14,11 +14,11 @@
   background-color: #f9f9f9;
 }
 
-.register h1 {
+.login h1 {
   text-align: center;
 }
 
-.register form {
+.login form {
   max-width: 300px;
   margin: 0 auto;
 }
@@ -45,8 +45,8 @@ button[type="submit"] {
 
 {% block content %}
 
-<div class="register">
-    <h1>注  册</h1>
+<div class="login">
+    <h1>登 录</h1>
 <form id="register_form" method="POST">
     {% csrf_token %}
     {% for field in form %}
@@ -57,7 +57,7 @@ button[type="submit"] {
 
               <div class="col-xs-8"
                 <input type="text" id="captcha-input" class="form-control" > {{ field }}
-                                 <span class="error_msg">{{ filed.errors.0 }}</span>
+                                 <span class="error_msg"></span>
               </div>
 
               <div class="col-xs-4">
@@ -70,12 +70,12 @@ button[type="submit"] {
              <div class="form-group">
                  <label for="{{ field.id_for_label }}">{{ field.label}}</label>
                  {{ field }}
-                 <span class="error_msg"> {{field.errors.0}}</span>
+                 <span class="error_msg"></span>
              </div>
         {% endif %}
     {% endfor %}
 <div>
-            <button type="submit" class="btn btn-default" id="get_register_btn">注 册</button>
+            <button type="submit" class="btn btn-default" id="get_register_btn">登 录</button>
 </div>
 
 </form>
@@ -93,7 +93,7 @@ function sendSmsAndCountdown() {
     var phone = $('#id_mobile_phone').val();
     $.ajax({
         url: '/sendsms/',
-        data: {phone: phone, tpl: "register"},
+        data: {phone: phone, tpl: "login"},
         dataType:"JSON",
         success: function(res) {
             if (res.code == 400) {
@@ -137,15 +137,19 @@ registerButton.addEventListener('click', function(event) {
 
 function bindRegisterbtn() {
     $.ajax({
-        url: "register",
+        url: "login/sms",
         type: 'POST',
         data: $("#register_form").serializeArray(),
         dataType: 'JSON',
         success: function(res) {
             if (res.code == 400) {
-                alert(res.err_msg.join("\n"));
+                let errorMsg = '';
+                for (let key in res.err_msg){
+                    errorMsg +=res.err_msg[key] +'\n';
+                }
+                alert(errorMsg);
             } else if (res.code == 200) {
-                //$("#response").html("注册成功！消息：" + res.err_msg);
+                //$("#response").html("登录成功！消息：" + res.err_msg);
                 location.href = res.err_msg;
             }
         }
@@ -163,7 +167,3 @@ $('#get_register_btn').click(function() {
 
 
 {% endblock %}
-
-
-
-
