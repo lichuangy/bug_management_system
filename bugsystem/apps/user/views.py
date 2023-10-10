@@ -148,12 +148,6 @@ def register(request):
     # return JsonResponse({})
 
 
-
-
-
-
-
-
 def login_sms(request):
     """登录"""
     if request.method == 'GET':
@@ -163,7 +157,11 @@ def login_sms(request):
     if request.method == "POST":
         form = LoginSMSFORM(request.POST)
         if form.is_valid():
-            return JsonResponse({"code":200,"err_msg":"ok"})
+            mobile_phone = form.cleaned_data['mobile_phone']
+            user_object = UserInfo.objects.filter(Qusername=mobile_phone)
+            request.session['user_id'] = user_object.id
+            request.session.set_expiry(60*60*24*14)
+            return JsonResponse({"code":200,"err_msg":"index"})
 
         else:
             # form.errors 中存储了错误信息
@@ -187,9 +185,20 @@ def login(request):
     if form.is_valid():
         username = form.cleaned_data['username']
         pwd = form.cleaned_data['password']
-        user_object = UserInfo.objects.filter(Q(username=username, password=pwd)|Q(email=username, password=pwd))
+        user_object = UserInfo.objects.filter(Q(username=username, password=pwd)|Q(email=username, password=pwd)).first()
         if not user_object:
             form.add_error('username','用户名或密码错误')
         else:
+            request.session['user_id'] = user_object.id
+            request.session.set_expiry(60*60*24*14)
             return redirect('index')
     return render(request,'html/login.html',{'form':form})
+
+
+def index(request):
+    return render(request,'html/index.html')
+
+
+def logout(request):
+    request.session.flush()
+    return redirect('index')
